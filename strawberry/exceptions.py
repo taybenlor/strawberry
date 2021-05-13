@@ -163,3 +163,13 @@ class FieldWithResolverAndDefaultFactoryError(Exception):
         )
 
         super().__init__(message)
+
+
+class UnsetRequiredArgumentError(Exception):
+    def __init__(self, argument_name: str, resolver_name: str):
+        message = (
+            f'Argument "{argument_name}" for resolver "{resolver_name}" is '
+            "marked as UNSET but not Optional."
+        )
+
+        super().__init__(message)
