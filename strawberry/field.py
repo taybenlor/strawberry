@@ -2,7 +2,19 @@ import dataclasses
 import enum
 import typing
 from inspect import iscoroutine
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
+from typing_extensions import get_origin
 
 from graphql import GraphQLResolveInfo
 
@@ -47,8 +59,25 @@ class StrawberryField(dataclasses.Field):
         # basic fields are fields with no provided resolver
         is_basic_field = not base_resolver
 
+        # Check if field can be UNSET
+        type_origin = get_origin(type_)
+        if type_origin is Union and UNSET in cast(Type, type_).__args__:
+            # TODO: check that default_value is UNSET otherwise log warning
+            # Create new Union without the UNSET type
+            new_args = tuple(
+                arg for arg in cast(Type, type_).__args__ if arg is not UNSET
+            )
+
+            # Raise an exception if the type is not marked as Optional
+            # if type(None) not in new_args:
+            #     raise UnsetRequiredFieldError(
+            #         field_name=python_name,
+            #     )
+
+            type_ = Union[new_args]
+
         super().__init__(  # type: ignore
-            default=(default if default is not UNSET else dataclasses.MISSING),
+            default=(dataclasses.MISSING if default is UNSET else default),
             default_factory=(
                 default_factory if default_factory is not UNSET else dataclasses.MISSING
             ),
